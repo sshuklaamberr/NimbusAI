@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NimbusAI — Hypernest Media</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px}
+
+:root{
+  --ff-display:'Syne',sans-serif;
+  --ff-mono:'Space Mono',monospace;
+  --bg:#040d18;
+  --bg2:#06121f;
+  --teal:#00e5cc;
+  --teal2:#00b8a0;
+  --amber:#ffb347;
+  --rose:#ff5e7a;
+  --glass:rgba(0,229,204,0.05);
+  --glass2:rgba(0,229,204,0.09);
+  --border:rgba(0,229,204,0.15);
+  --border2:rgba(0,229,204,0.25);
+  --text:#e2f4f0;
+  --muted:rgba(226,244,240,0.45);
+  --card-r:18px;
+  --glow:rgba(0,229,204,0.25);
+}
+
+body{
+  min-height:100vh;
+  background:var(--bg);
+  font-family:var(--ff-mono);
+  color:var(--text);
+  overflow-x:hidden;
+  cursor:default;
+}
+
+/* CUSTOM CURSOR */
+body{cursor:none}
+#cursor{
+  position:fixed;width:10px;height:10px;
+  background:var(--teal);border-radius:50%;
+  pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);
+  transition:transform 0.1s,width 0.2s,height 0.2s,background 0.2s;
+  box-shadow:0 0 12px var(--teal);
+}
+#cursor-ring{
+  position:fixed;width:36px;height:36px;
+  border:1.5px solid rgba(0,229,204,0.5);
+  border-radius:50%;pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);
+  transition:all 0.12s ease;
+}
+body:hover #cursor{opacity:1}
+
+/* STARS BG */
+#starCanvas{
+  position:fixed;inset:0;
+  pointer-events:none;z-index:0;
+  opacity:0.8;
+}
+
+/* ────────────────────────────────────────
+   LANDING SCREEN  
+───────────────────────────────────────── */
+#landingScreen{
+  position:relative;z-index:2;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:2rem;
+  transition:opacity 0.8s ease, transform 0.8s ease;
+}
+#landingScreen.hide{
+  opacity:0;transform:scale(1.04);pointer-events:none;
+}
+
+.brand-row{
+  display:flex;align-items:center;gap:0.9rem;
+  margin-bottom:0.5rem;
+  animation:dropIn 0.9s ease both;
+}
+.brand-logo{
+  width:48px;height:48px;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;
+  box-shadow:0 0 30px var(--glow);
+}
+.brand-title{
+  font-family:var(--ff-display);
+  font-size:2.2rem;font-weight:800;
+  letter-spacing:-0.02em;
+}
+.brand-title span{color:var(--teal)}
+
+.brand-sub{
+  font-size:0.62rem;letter-spacing:0.35em;
+  color:var(--muted);text-transform:uppercase;
+  margin-bottom:2.5rem;
+  animation:dropIn 0.9s 0.1s ease both;
+}
+
+/* EARTH CONTAINER */
+#earthWrap{
+  position:relative;
+  width:320px;height:320px;
+  margin-bottom:2.5rem;
+  animation:floatEarth 6s ease-in-out infinite, dropIn 1s 0.2s ease both;
+}
+@keyframes floatEarth{
+  0%,100%{transform:translateY(0) rotateX(2deg)}
+  50%{transform:translateY(-12px) rotateX(-2deg)}
+}
+#earthCanvas{
+  display:block;width:100%;height:100%;
+  border-radius:50%;
+  filter:drop-shadow(0 0 40px rgba(0,229,204,0.35)) drop-shadow(0 0 80px rgba(0,100,200,0.2));
+}
+/* Atmosphere ring */
+#earthWrap::before{
+  content:'';position:absolute;inset:-12px;
+  border-radius:50%;
+  background:radial-gradient(circle,transparent 48%,rgba(0,180,255,0.12) 60%,rgba(0,229,204,0.06) 72%,transparent 80%);
+  pointer-events:none;
+  animation:atmospherePulse 4s ease-in-out infinite;
+}
+@keyframes atmospherePulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.03);opacity:0.7}
+}
+/* Location pin on globe */
+#globePin{
+  position:absolute;
+  width:16px;height:16px;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(0);
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:10;
+  pointer-events:none;
+}
+#globePin.show{transform:translate(-50%,-50%) scale(1)}
+#globePin::before{
+  content:'📍';
+  font-size:1.5rem;
+  position:absolute;
+  top:-30px;left:50%;
+  transform:translateX(-50%);
+  filter:drop-shadow(0 0 8px rgba(255,80,80,0.8));
+}
+#globePin::after{
+  content:'';
+  position:absolute;
+  width:30px;height:30px;
+  border:2px solid var(--teal);
+  border-radius:50%;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  animation:pinPing 1.5s ease-out infinite;
+}
+@keyframes pinPing{
+  0%{transform:translate(-50%,-50%) scale(0.5);opacity:1}
+  100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}
+}
+
+/* Zoom overlay for Google Earth effect */
+#zoomOverlay{
+  position:fixed;inset:0;z-index:50;
+  background:radial-gradient(circle at var(--zoom-x,50%) var(--zoom-y,50%),
+    rgba(0,229,204,0.05) 0%, var(--bg) 70%);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.5s;
+}
+#zoomOverlay.active{opacity:1}
+
+/* Search section */
+.search-section{
+  width:100%;max-width:520px;
+  animation:dropIn 0.9s 0.3s ease both;
+}
+.search-row{
+  display:flex;gap:0.7rem;
+  position:relative;
+}
+.search-input-wrap{flex:1;position:relative}
+.search-input-wrap::before{
+  content:'◎';
+  position:absolute;left:1.1rem;top:50%;
+  transform:translateY(-50%);
+  color:var(--teal);font-size:1rem;z-index:1;
+  opacity:0.7;
+}
+#cityInput{
+  width:100%;
+  background:rgba(0,229,204,0.06);
+  border:1px solid var(--border2);
+  border-radius:14px;
+  padding:1rem 1.2rem 1rem 2.8rem;
+  color:var(--text);
+  font-family:var(--ff-mono);
+  font-size:0.82rem;
+  outline:none;
+  backdrop-filter:blur(16px);
+  transition:all 0.3s;
+  letter-spacing:0.02em;
+}
+#cityInput::placeholder{color:var(--muted)}
+#cityInput:focus{
+  border-color:var(--teal);
+  box-shadow:0 0 0 3px rgba(0,229,204,0.12),0 0 20px rgba(0,229,204,0.08);
+  background:rgba(0,229,204,0.09);
+}
+.search-btn{
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  border:none;border-radius:14px;
+  padding:1rem 1.6rem;
+  color:#040d18;
+  font-family:var(--ff-display);
+  font-size:0.78rem;font-weight:700;
+  cursor:pointer;letter-spacing:0.08em;
+  text-transform:uppercase;
+  transition:all 0.2s;
+  white-space:nowrap;
+  box-shadow:0 4px 24px rgba(0,229,204,0.3);
+}
+.search-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 32px rgba(0,229,204,0.45);
+}
+.search-btn:active{transform:translateY(0)}
+
+.geo-row{
+  display:flex;gap:0.6rem;
+  margin-top:0.9rem;
+  justify-content:center;
+}
+.geo-btn{
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:50px;
+  padding:0.5rem 1.1rem;
+  color:var(--muted);
+  font-family:var(--ff-mono);
+  font-size:0.68rem;
+  cursor:pointer;
+  transition:all 0.25s;
+  letter-spacing:0.05em;
+  display:flex;align-items:center;gap:0.45rem;
+}
+.geo-btn:hover{
+  border-color:var(--teal);
+  color:var(--teal);
+  background:rgba(0,229,204,0.06);
+  box-shadow:0 0 12px rgba(0,229,204,0.15);
+}
+
+.unit-pill{
+  background:rgba(0,229,204,0.08);
+  border:1px solid var(--border);
+  border-radius:50px;
+  padding:3px;
+  display:flex;gap:2px;
+}
+.unit-btn{
+  padding:0.35rem 0.8rem;
+  border-radius:50px;
+  font-family:var(--ff-mono);
+  font-size:0.68rem;font-weight:700;
+  border:none;cursor:pointer;
+  background:transparent;color:var(--muted);
+  transition:all 0.25s;
+  letter-spacing:0.05em;
+}
+.unit-btn.active{
+  background:var(--teal);color:#040d18;
+}
+
+/* Autocomplete */
+.autocomplete-box{
+  position:absolute;top:calc(100% + 8px);
+  left:0;right:0;
+  background:#06131f;
+  border:1px solid var(--border2);
+  border-radius:14px;overflow:hidden;
+  z-index:100;display:none;
+  backdrop-filter:blur(20px);
+  box-shadow:0 20px 60px rgba(0,0,0,0.6),0 0 40px rgba(0,229,204,0.08);
+}
+.autocomplete-box.open{display:block}
+.ac-item{
+  padding:0.85rem 1.2rem;
+  font-size:0.78rem;
+  cursor:pointer;
+  display:flex;align-items:center;gap:0.9rem;
+  border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover{background:var(--glass2)}
+.ac-city{color:var(--text);font-weight:700}
+.ac-country{color:var(--muted);font-size:0.68rem}
+
+/* Toast */
+#toast{
+  position:fixed;top:1.5rem;right:1.5rem;z-index:9000;
+  background:rgba(255,94,122,0.12);
+  border:1px solid rgba(255,94,122,0.35);
+  border-radius:12px;padding:0.9rem 1.3rem;
+  font-size:0.72rem;color:#ff9fb0;
+  backdrop-filter:blur(12px);
+  transform:translateX(130%);
+  transition:transform 0.45s cubic-bezier(0.175,0.885,0.32,1.275);
+  max-width:300px;letter-spacing:0.03em;
+  box-shadow:0 8px 32px rgba(255,94,122,0.2);
+}
+#toast.show{transform:translateX(0)}
+
+/* Progress bar */
+#progressBar{
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--teal),var(--amber),var(--rose));
+  z-index:9999;width:0%;
+  transition:width 0.35s ease;
+  box-shadow:0 0 10px var(--teal);
+}
+
+/* ────────────────────────────────────────
+   WEATHER SCREEN
+───────────────────────────────────────── */
+#weatherScreen{
+  position:relative;z-index:2;
+  min-height:100vh;
+  padding:clamp(1rem,2.5vw,1.8rem);
+  max-width:1440px;margin:0 auto;
+  opacity:0;transform:translateY(30px);
+  transition:opacity 0.7s ease,transform 0.7s ease;
+  pointer-events:none;display:none;
+}
+#weatherScreen.visible{
+  opacity:1;transform:translateY(0);
+  pointer-events:all;display:block;
+}
+
+/* Weather BG canvas */
+#wxCanvas{
+  position:fixed;inset:0;
+  pointer-events:none;z-index:1;
+  opacity:0.65;
+}
+
+/* NAV */
+.wx-nav{
+  display:flex;align-items:center;
+  justify-content:space-between;
+  margin-bottom:2rem;
+}
+.wx-back{
+  display:flex;align-items:center;gap:0.6rem;
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:50px;
+  padding:0.55rem 1.1rem;
+  font-size:0.7rem;color:var(--muted);
+  cursor:pointer;letter-spacing:0.05em;
+  transition:all 0.2s;backdrop-filter:blur(10px);
+}
+.wx-back:hover{border-color:var(--teal);color:var(--teal);background:var(--glass2)}
+.wx-controls{display:flex;align-items:center;gap:0.7rem}
+
+/* GRID LAYOUT */
+.wx-grid{
+  display:grid;
+  grid-template-columns:2fr 1.2fr;
+  grid-template-rows:auto;
+  gap:1.1rem;
+}
+
+/* HERO CARD */
+.wx-hero{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--card-r);
+  padding:2rem 2.2rem;
+  backdrop-filter:blur(24px);
+  position:relative;overflow:hidden;
+  grid-column:1;
+}
+.wx-hero::before{
+  content:'';position:absolute;
+  top:-60px;right:-60px;
+  width:260px;height:260px;
+  background:radial-gradient(circle,var(--glow) 0%,transparent 65%);
+  pointer-events:none;
+}
+.wx-hero-top{
+  display:flex;justify-content:space-between;
+  align-items:flex-start;margin-bottom:1rem;
+}
+.wx-city{
+  font-family:var(--ff-display);
+  font-size:clamp(2rem,4vw,3.2rem);
+  font-weight:800;line-height:1;
+  letter-spacing:-0.02em;
+}
+.wx-country{
+  display:inline-block;margin-top:0.4rem;
+  font-size:0.6rem;letter-spacing:0.3em;
+  text-transform:uppercase;
+  border:1px solid var(--teal);
+  color:var(--teal);
+  padding:0.2rem 0.7rem;
+  border-radius:50px;
+}
+.wx-datetime{
+  text-align:right;font-size:0.65rem;
+  color:var(--muted);line-height:2;
+  letter-spacing:0.05em;
+}
+.wx-temp-row{
+  display:flex;align-items:flex-end;
+  gap:1.8rem;margin-bottom:1rem;
+}
+.wx-bigtemp{
+  font-family:var(--ff-display);
+  font-size:clamp(5rem,10vw,7.5rem);
+  font-weight:800;line-height:0.9;
+  letter-spacing:-0.04em;
+  background:linear-gradient(135deg,var(--text),var(--teal));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  transition:all 0.5s;
+}
+.wx-bigtemp sup{
+  font-size:2.2rem;
+  vertical-align:super;
+  opacity:0.6;
+}
+.wx-emoji{
+  font-size:clamp(3.5rem,7vw,5rem);
+  filter:drop-shadow(0 0 20px rgba(0,229,204,0.5));
+  animation:floatIcon 5s ease-in-out infinite;
+  line-height:1;
+}
+@keyframes floatIcon{
+  0%,100%{transform:translateY(0) rotate(-5deg)}
+  50%{transform:translateY(-10px) rotate(5deg)}
+}
+.wx-cond{
+  font-size:0.85rem;letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--teal);font-weight:700;
+  margin-bottom:0.3rem;
+}
+.wx-feels{font-size:0.68rem;color:var(--muted);letter-spacing:0.08em}
+.wx-minmax{
+  display:flex;gap:1.5rem;
+  margin-top:1.4rem;font-size:0.72rem;
+  letter-spacing:0.08em;
+}
+.wx-hi{color:var(--amber)}
+.wx-lo{color:var(--teal)}
+
+/* STAT GRID CARD */
+.wx-stats{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--card-r);
+  padding:1.6rem;
+  backdrop-filter:blur(24px);
+  grid-column:2;grid-row:1/3;
+  display:flex;flex-direction:column;gap:0.9rem;
+}
+.stat-block{
+  background:rgba(0,229,204,0.04);
+  border:1px solid var(--border);
+  border-radius:13px;padding:0.95rem 1rem;
+  transition:all 0.25s;
+  flex:1;
+}
+.stat-block:hover{
+  background:var(--glass2);
+  border-color:var(--border2);
+  transform:translateX(3px);
+}
+.sb-label{
+  font-size:0.56rem;letter-spacing:0.3em;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:0.5rem;display:flex;align-items:center;gap:0.4rem;
+}
+.sb-val{
+  font-family:var(--ff-display);
+  font-size:1.45rem;font-weight:700;line-height:1;
+}
+.sb-unit{
+  font-family:var(--ff-mono);
+  font-size:0.58rem;color:var(--muted);margin-left:2px;
+}
+.sb-bar{
+  height:3px;background:rgba(255,255,255,0.07);
+  border-radius:2px;margin-top:0.5rem;overflow:hidden;
+}
+.sb-fill{
+  height:100%;border-radius:2px;
+  background:linear-gradient(90deg,var(--teal),var(--amber));
+  width:0%;transition:width 1.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* SECTION TITLE */
+.sec-title{
+  font-size:0.56rem;letter-spacing:0.35em;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:1.3rem;
+  display:flex;align-items:center;gap:0.7rem;
+}
+.sec-title::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--border),transparent);
+}
+
+/* SUN ARC CARD */
+.wx-sun{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--card-r);
+  padding:1.6rem;
+  backdrop-filter:blur(24px);
+  grid-column:1;
+}
+#sunArcCanvas{display:block;width:100%}
+.sun-times{
+  display:flex;justify-content:space-between;
+  margin-top:0.8rem;font-size:0.68rem;
+  color:var(--muted);letter-spacing:0.05em;
+}
+.sun-times span{color:var(--text)}
+
+/* FULL WIDTH CARDS */
+.wx-hourly,
+.wx-forecast,
+.wx-aq,
+.wx-bottom{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:var(--card-r);
+  padding:1.6rem;
+  backdrop-filter:blur(24px);
+  grid-column:1/-1;
+}
+
+/* HOURLY */
+.hourly-row{
+  display:flex;gap:0.75rem;
+  overflow-x:auto;padding-bottom:0.4rem;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+}
+.hourly-row::-webkit-scrollbar{height:3px}
+.hourly-row::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.h-item{
+  flex-shrink:0;width:78px;
+  background:rgba(0,229,204,0.04);
+  border:1px solid var(--border);
+  border-radius:13px;padding:0.9rem 0.5rem;
+  text-align:center;transition:all 0.25s;
+}
+.h-item:hover{
+  background:var(--glass2);
+  border-color:var(--teal);
+  transform:translateY(-4px);
+  box-shadow:0 8px 24px rgba(0,229,204,0.15);
+}
+.h-item.now{border-color:var(--teal);background:rgba(0,229,204,0.1)}
+.h-time{font-size:0.6rem;color:var(--muted);margin-bottom:0.5rem;letter-spacing:0.05em}
+.h-icon{font-size:1.5rem;margin-bottom:0.5rem}
+.h-temp{font-family:var(--ff-display);font-size:0.95rem;font-weight:700}
+.h-pop{font-size:0.55rem;color:var(--teal);margin-top:0.3rem}
+
+/* 5-DAY */
+.fc-row{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:0.85rem;
+}
+.fc-item{
+  background:rgba(0,229,204,0.04);
+  border:1px solid var(--border);
+  border-radius:13px;padding:1.1rem 0.7rem;
+  text-align:center;transition:all 0.25s;
+}
+.fc-item:hover{
+  background:var(--glass2);
+  border-color:var(--teal);
+  transform:translateY(-5px);
+  box-shadow:0 12px 28px rgba(0,229,204,0.15);
+}
+.fc-day{font-size:0.6rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem}
+.fc-ico{font-size:2rem;display:block;margin-bottom:0.5rem}
+.fc-desc{font-size:0.56rem;color:var(--muted);margin-bottom:0.6rem;text-transform:capitalize}
+.fc-tt{display:flex;justify-content:center;gap:0.6rem;font-size:0.75rem}
+.fc-hi{color:var(--amber);font-weight:700}
+.fc-lo{color:var(--teal)}
+.fc-pop{font-size:0.56rem;color:rgba(0,229,204,0.7);margin-top:0.4rem}
+
+/* AIR QUALITY */
+.aq-wrap{
+  display:flex;align-items:center;
+  gap:1.8rem;margin-bottom:1.4rem;
+}
+.aq-ring{
+  width:88px;height:88px;
+  border-radius:50%;
+  border:3px solid currentColor;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  flex-shrink:0;
+  font-family:var(--ff-display);
+  transition:all 0.6s;
+}
+.aq-n{font-size:1.8rem;font-weight:700;line-height:1}
+.aq-s{font-size:0.48rem;letter-spacing:0.2em;opacity:0.65;text-transform:uppercase}
+.aq-info .aq-label{
+  font-family:var(--ff-display);
+  font-size:1.4rem;font-weight:700;
+  margin-bottom:0.3rem;
+}
+.aq-info .aq-desc{font-size:0.65rem;color:var(--muted);line-height:1.6}
+.aq-pols{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0.7rem;
+}
+.aq-pol{
+  background:rgba(0,229,204,0.04);
+  border:1px solid var(--border);
+  border-radius:11px;padding:0.75rem;text-align:center;
+}
+.aq-pname{font-size:0.56rem;color:var(--muted);letter-spacing:0.1em;margin-bottom:0.4rem}
+.aq-pval{font-family:var(--ff-display);font-size:1.1rem;font-weight:700}
+.aq-punit{font-size:0.48rem;color:var(--muted)}
+
+/* BOTTOM ROW: Wind + Comfort */
+.wx-bottom{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:1.4rem;
+}
+.wind-section .sec-title,
+.comfort-section .sec-title{margin-bottom:1rem}
+#windCompassCanvas{display:block;margin:0 auto}
+.wind-data{text-align:center;margin-top:0.9rem}
+.wind-dir-txt{
+  font-family:var(--ff-display);
+  font-size:1.2rem;font-weight:700;
+  margin-bottom:0.2rem;
+}
+.wind-gust-txt{font-size:0.62rem;color:var(--muted);letter-spacing:0.05em}
+
+.comfort-rows{display:flex;flex-direction:column;gap:0.9rem}
+.cm-row{
+  display: flex;
+  gap: 0.5rem;
+}
+.cm-header{
+  display:flex;justify-content:space-between;
+  font-size:0.62rem;color:var(--muted);
+  margin-bottom:0.4rem;letter-spacing:0.05em;
+}
+.cm-header span{color:var(--text);font-weight:700}
+.cm-track{
+  height:6px;background:rgba(255,255,255,0.07);
+  border-radius:4px;overflow:hidden;
+}
+.cm-fill{
+  height:100%;border-radius:4px;
+  width:0%;
+  transition:width 1.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* INFO STRIP */
+.wx-info{
+  background:rgba(0,229,204,0.06);
+  border:1px solid rgba(0,229,204,0.2);
+  border-radius:14px;
+  padding:1rem 1.4rem;
+  display:flex;align-items:center;gap:1rem;
+  font-size:0.7rem;color:var(--muted);
+  letter-spacing:0.03em;line-height:1.6;
+  margin-bottom:1.1rem;
+  grid-column:1/-1;
+}
+.wx-info .wi-icon{font-size:1.3rem;flex-shrink:0}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:2.5rem 0 1.5rem;
+  grid-column:1/-1;
+}
+.footer-inner{
+  display:inline-flex;flex-direction:column;
+  align-items:center;gap:0.5rem;
+}
+.footer-brand{
+  font-family:var(--ff-display);
+  font-size:1rem;font-weight:700;
+  letter-spacing:0.05em;
+  color:var(--text);
+}
+.footer-brand .hm{color:var(--teal)}
+.footer-tagline{
+  font-size:0.58rem;letter-spacing:0.25em;
+  text-transform:uppercase;color:var(--muted);
+}
+.footer-divider{
+  width:40px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--teal),transparent);
+  margin:0.3rem 0;
+}
+.footer-copy{
+  font-size:0.56rem;color:rgba(226,244,240,0.25);
+  letter-spacing:0.12em;
+}
+
+/* ────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────── */
+@keyframes dropIn{
+  from{opacity:0;transform:translateY(-22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.anim-in{animation:fadeUp 0.6s ease both}
+
+/* RESPONSIVE */
+@media(max-width:1000px){
+  .wx-grid{grid-template-columns:1fr}
+  .wx-stats{grid-column:1;grid-row:auto;
+    display:grid;grid-template-columns:1fr 1fr;gap:0.7rem}
+  .wx-sun{grid-column:1}
+  .fc-row{grid-template-columns:repeat(3,1fr)}
+  .aq-pols{grid-template-columns:repeat(2,1fr)}
+  .wx-bottom{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .fc-row{grid-template-columns:repeat(2,1fr)}
+  .aq-pols{grid-template-columns:repeat(2,1fr)}
+  #earthWrap{width:260px;height:260px}
+  .wx-bigtemp{font-size:4.5rem}
+  .wx-bottom{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Background layers -->
+<canvas id="starCanvas"></canvas>
+<canvas id="wxCanvas"></canvas>
+<div id="progressBar"></div>
+<div id="toast"></div>
+<div id="zoomOverlay"></div>
+
+<!-- ═══════════════════════════════════════
+     LANDING SCREEN
+════════════════════════════════════════ -->
+<div id="landingScreen">
+  <div class="brand-row">
+    <div class="brand-logo">🌦</div>
+    <div class="brand-title">Nimbus<span>AI</span></div>
+  </div>
+  <div class="brand-sub">Weather Intelligence by Hypernest Media</div>
+
+  <!-- EARTH GLOBE -->
+  <div id="earthWrap">
+    <canvas id="earthCanvas" width="320" height="320"></canvas>
+    <div id="globePin"></div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-section">
+    <div class="search-row">
+      <div class="search-input-wrap">
+        <input type="text" id="cityInput" placeholder="Search for a city…" autocomplete="off"/>
+        <div class="autocomplete-box" id="acBox"></div>
+      </div>
+      <button class="search-btn" onclick="doSearch()">Explore</button>
+    </div>
+    <div class="geo-row">
+      <button class="geo-btn" onclick="doGeo()">📍 Use My Location</button>
+      <div class="unit-pill">
+        <button class="unit-btn active" id="btnC" onclick="setUnit('C')">°C</button>
+        <button class="unit-btn" id="btnF" onclick="setUnit('F')">°F</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     WEATHER SCREEN
+════════════════════════════════════════ -->
+<div id="weatherScreen">
+
+  <!-- NAV -->
+  <div class="wx-nav anim-in">
+    <button class="wx-back" onclick="goBack()">← Back to Globe</button>
+    <div class="wx-controls">
+      <div class="unit-pill">
+        <button class="unit-btn active" id="btnC2" onclick="setUnit('C')">°C</button>
+        <button class="unit-btn" id="btnF2" onclick="setUnit('F')">°F</button>
+      </div>
+      <button class="geo-btn" onclick="doGeo()">📍 My Location</button>
+    </div>
+  </div>
+
+  <div class="wx-grid">
+
+    <!-- HERO -->
+    <div class="wx-hero anim-in">
+      <div class="wx-hero-top">
+        <div>
+          <div class="wx-city" id="wxCity">—</div>
+          <div class="wx-country" id="wxCountry">—</div>
+        </div>
+        <div class="wx-datetime" id="wxDatetime">—</div>
+      </div>
+      <div class="wx-temp-row">
+        <div class="wx-bigtemp" id="wxBigTemp">—<sup id="wxTUnit">°C</sup></div>
+        <div class="wx-emoji" id="wxEmoji">⛅</div>
+      </div>
+      <div class="wx-cond" id="wxCond">—</div>
+      <div class="wx-feels" id="wxFeels">—</div>
+      <div class="wx-minmax">
+        <span>↑ <span class="wx-hi" id="wxHi">—</span></span>
+        <span>↓ <span class="wx-lo" id="wxLo">—</span></span>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="wx-stats anim-in" style="animation-delay:0.1s">
+      <div class="stat-block">
+        <div class="sb-label">💧 Humidity</div>
+        <div class="sb-val" id="sbHum">—<span class="sb-unit">%</span></div>
+        <div class="sb-bar"><div class="sb-fill" id="bHum"></div></div>
+      </div>
+      <div class="stat-block">
+        <div class="sb-label">💨 Wind</div>
+        <div class="sb-val" id="sbWind">—<span class="sb-unit">km/h</span></div>
+        <div class="sb-bar"><div class="sb-fill" id="bWind" style="background:linear-gradient(90deg,var(--teal),#00a8ff)"></div></div>
+      </div>
+      <div class="stat-block">
+        <div class="sb-label">📊 Pressure</div>
+        <div class="sb-val" id="sbPres">—<span class="sb-unit">hPa</span></div>
+        <div class="sb-bar"><div class="sb-fill" id="bPres" style="background:linear-gradient(90deg,var(--amber),#ff9f1c)"></div></div>
+      </div>
+      <div class="stat-block">
+        <div class="sb-label">👁️ Visibility</div>
+        <div class="sb-val" id="sbVis">—<span class="sb-unit">km</span></div>
+        <div class="sb-bar"><div class="sb-fill" id="bVis" style="background:linear-gradient(90deg,#06d6a0,var(--teal))"></div></div>
+      </div>
+      <div class="stat-block">
+        <div class="sb-label">🌡️ Dew Point</div>
+        <div class="sb-val" id="sbDew">—<span class="sb-unit" id="sbDewU">°C</span></div>
+        <div class="sb-bar"><div class="sb-fill" id="bDew" style="background:linear-gradient(90deg,#06d6a0,#40e0d0)"></div></div>
+      </div>
+      <div class="stat-block">
+        <div class="sb-label">☁️ Cloud Cover</div>
+        <div class="sb-val" id="sbCloud">—<span class="sb-unit">%</span></div>
+        <div class="sb-bar"><div class="sb-fill" id="bCloud" style="background:linear-gradient(90deg,#b0c4de,#e0e8f5)"></div></div>
+      </div>
+    </div>
+
+    <!-- INFO STRIP -->
+    <div class="wx-info anim-in" id="wxInfo" style="animation-delay:0.15s">
+      <div class="wi-icon">💡</div>
+      <div id="wxInfoText">Loading insight…</div>
+    </div>
+
+    <!-- SUN ARC -->
+    <div class="wx-sun anim-in" style="animation-delay:0.2s">
+      <div class="sec-title">☀️ Sun Path</div>
+      <canvas id="sunArcCanvas" height="130"></canvas>
+      <div class="sun-times">
+        <div>🌅 <span id="wxSunrise">—</span></div>
+        <div>Day: <span id="wxDayLen">—</span></div>
+        <div>🌇 <span id="wxSunset">—</span></div>
+      </div>
+    </div>
+
+    <!-- HOURLY -->
+    <div class="wx-hourly anim-in" style="animation-delay:0.25s">
+      <div class="sec-title">⏱️ Hourly (24h)</div>
+      <div class="hourly-row" id="hourlyRow"></div>
+    </div>
+
+    <!-- 5-DAY -->
+    <div class="wx-forecast anim-in" style="animation-delay:0.3s">
+      <div class="sec-title">📅 5-Day Forecast</div>
+      <div class="fc-row" id="fcRow"></div>
+    </div>
+
+    <!-- AQ -->
+    <div class="wx-aq anim-in" style="animation-delay:0.35s">
+      <div class="sec-title">🌿 Air Quality</div>
+      <div class="aq-wrap">
+        <div class="aq-ring" id="aqRing">
+          <div class="aq-n" id="aqNum">—</div>
+          <div class="aq-s">AQI</div>
+        </div>
+        <div class="aq-info">
+          <div class="aq-label" id="aqLabel">—</div>
+          <div class="aq-desc" id="aqDesc">—</div>
+        </div>
+      </div>
+      <div class="aq-pols" id="aqPols"></div>
+    </div>
+
+    <!-- WIND + COMFORT -->
+    <div class="wx-bottom anim-in" style="animation-delay:0.4s">
+      <div class="wind-section">
+        <div class="sec-title">🌬️ Wind Compass</div>
+        <canvas id="windCompassCanvas" width="170" height="170"></canvas>
+        <div class="wind-data">
+          <div class="wind-dir-txt" id="wxWindDir">—</div>
+          <div class="wind-gust-txt" id="wxWindGust">—</div>
+        </div>
+      </div>
+      <div class="comfort-section">
+        <div class="sec-title">🧘 Comfort Index</div>
+        <div class="comfort-rows">
+          <div class="cm-row">
+            <div class="cm-header">Temperature <span id="cmTempV">—</span></div>
+            <div class="cm-track"><div class="cm-fill" id="cmTemp" style="background:linear-gradient(90deg,var(--teal),var(--amber))"></div></div>
+          </div>
+          <div class="cm-row">
+            <div class="cm-header">Humidity <span id="cmHumV">—</span></div>
+            <div class="cm-track"><div class="cm-fill" id="cmHum" style="background:linear-gradient(90deg,#06d6a0,var(--teal))"></div></div>
+          </div>
+          <div class="cm-row">
+            <div class="cm-header">Wind Intensity <span id="cmWindV">—</span></div>
+            <div class="cm-track"><div class="cm-fill" id="cmWind" style="background:linear-gradient(90deg,#a0c4ff,#6a8cff)"></div></div>
+          </div>
+          <div class="cm-row">
+            <div class="cm-header">UV Exposure <span id="cmUVV">—</span></div>
+            <div class="cm-track"><div class="cm-fill" id="cmUV" style="background:linear-gradient(90deg,var(--amber),var(--rose))"></div></div>
+          </div>
+          <div class="cm-row">
+            <div class="cm-header">Visibility <span id="cmVisV">—</span></div>
+            <div class="cm-track"><div class="cm-fill" id="cmVis" style="background:linear-gradient(90deg,#06d6a0,#40e0d0)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="footer-inner">
+        <div class="footer-brand">Designed by <span class="hm">Hypernest Media</span></div>
+        <div class="footer-divider"></div>
+        <div class="footer-tagline">NimbusAI Weather Intelligence</div>
+        <div class="footer-copy">© 2025 Hypernest Media · Powered by OpenWeatherMap · All rights reserved</div>
+      </div>
+    </footer>
+
+  </div><!-- /wx-grid -->
+</div><!-- /weatherScreen -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const API_KEY = '0967601d71b4161eb35b97c2f6fe4bf9';
+const BASE    = 'https://api.openweathermap.org';
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let unit      = 'C';
+let wxData    = null;
+let fcData    = null;
+let aqData_   = null;
+let earthRotY = 0;
+let earthRotX = 0.4;
+let targetRotY= 0;
+let targetRotX= 0.4;
+let earthZoom = 1;
+let targetZoom= 1;
+let isZooming = false;
+let acTimer   = null;
+let wxAnimFrame=null;
+
+// ═══════════════════════════════════════════════════════════
+//  CUSTOM CURSOR
+// ═══════════════════════════════════════════════════════════
+const cur = document.getElementById('cursor');
+const curR= document.getElementById('cursor-ring');
+document.addEventListener('mousemove', e=>{
+  cur.style.left = e.clientX+'px';
+  cur.style.top  = e.clientY+'px';
+  setTimeout(()=>{
+    curR.style.left= e.clientX+'px';
+    curR.style.top = e.clientY+'px';
+  },80);
+});
+document.addEventListener('mousedown',()=>{
+  cur.style.transform='translate(-50%,-50%) scale(2)';
+  cur.style.opacity='0.5';
+});
+document.addEventListener('mouseup',()=>{
+  cur.style.transform='translate(-50%,-50%) scale(1)';
+  cur.style.opacity='1';
+});
+
+// ═══════════════════════════════════════════════════════════
+//  STAR CANVAS
+// ═══════════════════════════════════════════════════════════
+(function initStars(){
+  const c = document.getElementById('starCanvas');
+  const ctx = c.getContext('2d');
+  let stars = [];
+
+  function resize(){
+    c.width = window.innerWidth;
+    c.height= window.innerHeight;
+    stars = Array.from({length:250},()=>({
+      x:Math.random()*c.width, y:Math.random()*c.height,
+      r:Math.random()*1.4+0.2,
+      a:Math.random(), da:(Math.random()-0.5)*0.006
+    }));
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Occasional meteor
+  let meteors=[];
+  setInterval(()=>{
+    if(Math.random()>0.6) meteors.push({
+      x:Math.random()*c.width*0.7, y:Math.random()*c.height*0.3,
+      vx:5+Math.random()*4, vy:2.5+Math.random()*2,
+      len:60+Math.random()*80, a:1
+    });
+  },2200);
+
+  function draw(){
+    requestAnimationFrame(draw);
+    ctx.clearRect(0,0,c.width,c.height);
+    stars.forEach(s=>{
+      s.a+=s.da; if(s.a>1||s.a<0)s.da*=-1;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(210,235,255,${s.a})`;
+      ctx.fill();
+    });
+    meteors = meteors.filter(m=>{
+      m.x+=m.vx; m.y+=m.vy; m.a-=0.025;
+      if(m.a<=0) return false;
+      const g=ctx.createLinearGradient(m.x-m.vx*(m.len/m.vx),m.y-m.vy*(m.len/m.vx),m.x,m.y);
+      g.addColorStop(0,'transparent');
+      g.addColorStop(1,`rgba(180,230,255,${m.a})`);
+      ctx.beginPath();
+      ctx.moveTo(m.x-m.vx*(m.len/m.vx),m.y-m.vy*(m.len/m.vx));
+      ctx.lineTo(m.x,m.y);
+      ctx.strokeStyle=g; ctx.lineWidth=1.5; ctx.stroke();
+      return true;
+    });
+  }
+  draw();
+})();
+
+// ═══════════════════════════════════════════════════════════
+//  EARTH GLOBE  — Canvas 2D sphere renderer
+// ═══════════════════════════════════════════════════════════
+const CONTINENTS = [
+  // North America
+  {c:'#2d7a3a',pts:[
+    [72,-140],[72,-90],[68,-85],[60,-85],[55,-55],[48,-53],[45,-53],
+    [25,-77],[15,-83],[10,-77],[8,-65],[18,-66],[25,-77],[30,-80],
+    [25,-80],[20,-87],[15,-83],[20,-90],[22,-105],[25,-110],[30,-117],
+    [35,-120],[40,-124],[48,-125],[55,-132],[60,-140],[68,-138],[72,-140]
+  ]},
+  {c:'#4a7a38',pts:[ // Greenland
+    [76,-72],[83,-42],[82,-18],[76,-18],[72,-22],[65,-38],[60,-44],
+    [62,-50],[66,-53],[72,-55],[76,-72]
+  ]},
+  {c:'#3a8c2e',pts:[ // South America
+    [12,-72],[10,-62],[8,-60],[2,-50],[-5,-35],[-15,-39],[-23,-43],
+    [-34,-53],[-52,-68],[-55,-66],[-42,-65],[-35,-57],[-25,-48],
+    [-15,-39],[0,-50],[5,-52],[10,-62],[12,-72]
+  ]},
+  {c:'#3d7a30',pts:[ // Europe
+    [72,20],[70,30],[65,28],[60,22],[55,18],[50,12],[45,12],[43,5],
+    [44,-5],[48,-5],[55,8],[58,10],[60,5],[62,5],[65,14],[70,18],[72,20]
+  ]},
+  {c:'#5a8a2a',pts:[ // Africa
+    [37,10],[37,42],[20,50],[0,50],[-5,40],[-20,35],[-35,27],
+    [-35,18],[-25,14],[-10,12],[0,9],[10,2],[15,-15],[5,-15],
+    [0,10],[10,15],[30,32],[37,10]
+  ]},
+  {c:'#3d7a35',pts:[ // Asia main
+    [72,25],[72,120],[60,140],[50,138],[40,128],[35,120],[28,118],
+    [22,110],[10,100],[0,100],[5,80],[15,72],[25,68],[35,58],
+    [40,55],[45,58],[55,60],[60,45],[65,35],[72,35],[72,25]
+  ]},
+  {c:'#4a7830',pts:[ // India
+    [30,68],[30,80],[22,88],[8,77],[8,80],[12,80],[22,88],
+    [26,92],[27,97],[23,92],[13,80],[8,77],[8,72],[15,72],
+    [20,68],[26,66],[30,66],[30,68]
+  ]},
+  {c:'#6a7a25',pts:[ // Australia
+    [-15,130],[-15,142],[-20,148],[-28,153],[-38,146],[-38,140],
+    [-35,137],[-32,116],[-22,114],[-17,122],[-13,130],[-15,130]
+  ]},
+  {c:'#9ab0bb',pts:[ // Antarctica simplified
+    [-65,0],[-65,30],[-65,60],[-65,90],[-65,120],[-65,150],
+    [-65,180],[-65,-150],[-65,-120],[-65,-90],[-65,-60],[-65,-30],[-65,0]
+  ]},
+  {c:'#4a8a30',pts:[ // Japan
+    [45,141],[43,141],[41,140],[35,136],[33,130],[31,130],
+    [32,131],[34,137],[36,137],[38,141],[40,141],[43,144],[45,142],[45,141]
+  ]},
+  {c:'#4a8030',pts:[ // UK + Ireland
+    [60,-2],[58,0],[53,-5],[51,-5],[50,-3],[51,1],[54,0],[58,-2],[60,-2]
+  ]},
+  {c:'#3d7a35',pts:[ // SE Asia / Malay
+    [5,100],[0,105],[-8,115],[0,120],[5,115],[10,105],[5,100]
+  ]},
+  {c:'#3a7a30',pts:[ // Sumatra/Java rough
+    [5,95],[2,104],[-8,115],[-8,112],[0,108],[3,98],[5,95]
+  ]},
+];
+
+(function initEarth(){
+  const canvas= document.getElementById('earthCanvas');
+  const ctx   = canvas.getContext('2d');
+  const W=320, H=320, cx=W/2, cy=H/2, R=148;
+
+  // Off-screen for continent caching
+  function latLonTo3D(lat, lon, rotY, rotX){
+    const φ= lat*Math.PI/180;
+    const λ= lon*Math.PI/180 + rotY;
+    let x = Math.cos(φ)*Math.cos(λ);
+    let y = Math.sin(φ);
+    let z = Math.cos(φ)*Math.sin(λ);
+    // Tilt around X
+    const y2 = y*Math.cos(rotX) - z*Math.sin(rotX);
+    const z2 = y*Math.sin(rotX) + z*Math.cos(rotX);
+    return {x, y:y2, z:z2};
+  }
+
+  function project(pt){ return {px: cx + pt.x*R, py: cy - pt.y*R }; }
+
+  function drawGlobe(){
+    ctx.clearRect(0,0,W,H);
+
+    // Ocean gradient
+    const og= ctx.createRadialGradient(cx-30,cy-30,10,cx,cy,R);
+    og.addColorStop(0,'#1a4080');
+    og.addColorStop(0.4,'#0e2a5a');
+    og.addColorStop(0.8,'#061830');
+    og.addColorStop(1,'#020c1a');
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+    ctx.fillStyle=og; ctx.fill();
+
+    // Longitude / latitude grid lines (subtle)
+    ctx.save();
+    ctx.strokeStyle='rgba(0,100,180,0.15)';
+    ctx.lineWidth=0.5;
+    for(let lon=-180;lon<=180;lon+=30){
+      ctx.beginPath();
+      let first=true;
+      for(let lat=-80;lat<=80;lat+=5){
+        const p=latLonTo3D(lat,lon,earthRotY,earthRotX);
+        if(p.z<0){first=true;continue;}
+        const pr=project(p);
+        first?ctx.moveTo(pr.px,pr.py):ctx.lineTo(pr.px,pr.py);
+        first=false;
+      }
+      ctx.stroke();
+    }
+    for(let lat=-60;lat<=60;lat+=30){
+      ctx.beginPath(); let first=true;
+      for(let lon=-180;lon<=180;lon+=5){
+        const p=latLonTo3D(lat,lon,earthRotY,earthRotX);
+        if(p.z<0){first=true;continue;}
+        const pr=project(p);
+        first?ctx.moveTo(pr.px,pr.py):ctx.lineTo(pr.px,pr.py);
+        first=false;
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Continents
+    CONTINENTS.forEach(cont=>{
+      ctx.save();
+      // Filter visible points
+      const visible = cont.pts.map(([lat,lon])=>{
+        const p3d = latLonTo3D(lat,lon,earthRotY,earthRotX);
+        const pr  = project(p3d);
+        return {visible: p3d.z>-0.1, px:pr.px, py:pr.py};
+      });
+      if(!visible.some(v=>v.visible)){ctx.restore();return;}
+      ctx.beginPath();
+      let started=false;
+      visible.forEach(v=>{
+        if(!v.visible){started=false;return;}
+        started?ctx.lineTo(v.px,v.py):ctx.moveTo(v.px,v.py);
+        started=true;
+      });
+      ctx.closePath();
+      ctx.fillStyle=cont.c;
+      ctx.globalAlpha=0.85;
+      ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,0.2)';
+      ctx.lineWidth=0.5;
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // City glow when pinned
+    if(pinnedLat!==null){
+      const p3d=latLonTo3D(pinnedLat,pinnedLon,earthRotY,earthRotX);
+      if(p3d.z>0.05){
+        const pr=project(p3d);
+        // Glow ring
+        const t=Date.now()/1000;
+        const pulse=(Math.sin(t*3)+1)/2;
+        const gr=ctx.createRadialGradient(pr.px,pr.py,0,pr.px,pr.py,18+pulse*8);
+        gr.addColorStop(0,'rgba(255,80,80,0.9)');
+        gr.addColorStop(0.4,'rgba(255,180,0,0.5)');
+        gr.addColorStop(1,'transparent');
+        ctx.beginPath(); ctx.arc(pr.px,pr.py,18+pulse*8,0,Math.PI*2);
+        ctx.fillStyle=gr; ctx.fill();
+        ctx.beginPath(); ctx.arc(pr.px,pr.py,4,0,Math.PI*2);
+        ctx.fillStyle='#ff4444'; ctx.fill();
+        ctx.beginPath(); ctx.arc(pr.px,pr.py,6,0,Math.PI*2);
+        ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=1; ctx.stroke();
+      }
+    }
+
+    // Atmosphere / specular highlight
+    const atm=ctx.createRadialGradient(cx-R*0.3,cy-R*0.35,R*0.1,cx,cy,R);
+    atm.addColorStop(0,'rgba(120,200,255,0.18)');
+    atm.addColorStop(0.6,'rgba(0,80,160,0.04)');
+    atm.addColorStop(0.92,'rgba(0,150,255,0.12)');
+    atm.addColorStop(1,'rgba(0,100,200,0.3)');
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+    ctx.fillStyle=atm; ctx.fill();
+
+    // Specular shine
+    const shine=ctx.createRadialGradient(cx-R*0.35,cy-R*0.4,0,cx-R*0.2,cy-R*0.2,R*0.55);
+    shine.addColorStop(0,'rgba(255,255,255,0.18)');
+    shine.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+    ctx.fillStyle=shine; ctx.fill();
+
+    // Night-side shadow
+    const shadow=ctx.createRadialGradient(cx+R*0.5,cy,R*0.1,cx+R*0.4,cy,R);
+    shadow.addColorStop(0,'rgba(0,0,0,0)');
+    shadow.addColorStop(0.5,'rgba(0,0,10,0.15)');
+    shadow.addColorStop(1,'rgba(0,0,20,0.55)');
+    ctx.beginPath(); ctx.arc(cx,cy,R,0,Math.PI*2);
+    ctx.fillStyle=shadow; ctx.fill();
+
+    // City lights on dark side
+    ctx.save();
+    ctx.globalCompositeOperation='screen';
+    for(let i=0;i<30;i++){
+      const lat=(Math.random()-0.5)*140;
+      const lon=(Math.random()-0.5)*360;
+      const p3d=latLonTo3D(lat,lon,earthRotY,earthRotX);
+      if(p3d.z>-0.05) continue; // only dark side
+      const pr=project(p3d);
+      const alpha=Math.min(0.4,(-p3d.z)*0.5);
+      ctx.beginPath(); ctx.arc(pr.px,pr.py,0.8+Math.random(),0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,220,120,${alpha*0.6})`; ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  let pinnedLat=null, pinnedLon=null;
+  window.setPinnedLocation=(lat,lon)=>{pinnedLat=lat;pinnedLon=lon;};
+
+  function animEarth(){
+    requestAnimationFrame(animEarth);
+    if(!isZooming){
+      earthRotY += 0.003;
+    } else {
+      // Smooth lerp to target
+      earthRotY += (targetRotY - earthRotY)*0.04;
+      earthRotX += (targetRotX - earthRotX)*0.04;
+      earthZoom += (targetZoom - earthZoom)*0.05;
+      document.getElementById('earthCanvas').style.transform =
+        `scale(${earthZoom})`;
+      if(Math.abs(earthRotY-targetRotY)<0.001 && 
+         Math.abs(earthZoom-targetZoom)<0.005 &&
+         targetZoom>3){
+        // Zoom complete → show weather
+        finishZoom();
+      }
+    }
+    drawGlobe();
+  }
+  animEarth();
+
+  window._redrawEarth = drawGlobe;
+})();
+
+// ═══════════════════════════════════════════════════════════
+//  GOOGLE EARTH ZOOM ANIMATION
+// ═══════════════════════════════════════════════════════════
+function triggerGlobeZoom(lat, lon, callback){
+  isZooming = true;
+  setPinnedLocation(lat, lon);
+  document.getElementById('globePin').classList.add('show');
+
+  // Target rotation: globe rotates to face selected lat/lon
+  const targetLon = -(lon * Math.PI/180);
+  const targetLatRot = -(lat * Math.PI/180)*0.8;
+
+  // Normalize: find shortest path for rotation
+  let diff = targetLon - (earthRotY % (Math.PI*2));
+  if(diff > Math.PI) diff -= Math.PI*2;
+  if(diff < -Math.PI) diff += Math.PI*2;
+
+  targetRotY = earthRotY + diff;
+  targetRotX = targetLatRot + 0.15;
+  targetZoom = 0.5; // first zoom out slightly
+
+  // Phase 1: rotate to location (zoom out slightly)
+  setTimeout(()=>{
+    targetZoom = 8; // then zoom IN like Google Earth
+    document.getElementById('zoomOverlay').classList.add('active');
+    document.getElementById('zoomOverlay').style.setProperty(
+      '--zoom-x', '50%'
+    );
+  }, 1200);
+
+  window._zoomCallback = callback;
+}
+
+function finishZoom(){
+  isZooming = false;
+  earthZoom = 1;
+  targetZoom = 1;
+  document.getElementById('earthCanvas').style.transform='scale(1)';
+  document.getElementById('zoomOverlay').classList.remove('active');
+  if(window._zoomCallback){
+    window._zoomCallback();
+    window._zoomCallback = null;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WEATHER BACKGROUNDS (canvas)
+// ═══════════════════════════════════════════════════════════
+const THEMES={
+  Clear:       {from:'#040d18',mid:'#061525',to:'#0a2248'},
+  Clouds:      {from:'#070c14',mid:'#0e1520',to:'#16202e'},
+  Rain:        {from:'#030810',mid:'#050e18',to:'#081524'},
+  Drizzle:     {from:'#030810',mid:'#050e18',to:'#081524'},
+  Thunderstorm:{from:'#020508',mid:'#060210',to:'#0a0518'},
+  Snow:        {from:'#06101e',mid:'#0e1828',to:'#182436'},
+  Mist:        {from:'#060a0e',mid:'#0e1218',to:'#161c24'},
+  Fog:         {from:'#060a0e',mid:'#0e1218',to:'#161c24'},
+  Haze:        {from:'#0a0c06',mid:'#16180a',to:'#20240e'},
+};
+const EMOJIS={
+  Thunderstorm:'⛈️',Drizzle:'🌦️',Rain:'🌧️',
+  Snow:'❄️',Mist:'🌫️',Smoke:'🌫️',Haze:'🌫️',
+  Dust:'🌪️',Fog:'🌫️',Tornado:'🌪️',Clear:'☀️',Clouds:'☁️'
+};
+const AQ_LVLS=[
+  {l:'Good',       c:'#06d6a0',d:'Air quality is satisfactory and poses little or no risk.'},
+  {l:'Fair',       c:'#00e5cc',d:'Acceptable air quality. Sensitive people may notice mild effects.'},
+  {l:'Moderate',   c:'#ffd166',d:'Sensitive groups may experience health effects.'},
+  {l:'Poor',       c:'#ff9f1c',d:'Everyone may begin to experience health effects.'},
+  {l:'Very Poor',  c:'#ff5e7a',d:'Health alert — serious effects for everyone.'},
+];
+
+let wxParticles=[];
+function startWxCanvas(cond){
+  const c=document.getElementById('wxCanvas');
+  const ctx=c.getContext('2d');
+  cancelAnimationFrame(wxAnimFrame);
+  wxParticles=[];
+  c.width=window.innerWidth; c.height=window.innerHeight;
+  window.onresize=()=>{c.width=window.innerWidth;c.height=window.innerHeight};
+
+  if(cond==='Clear'){
+    for(let i=0;i<8;i++) wxParticles.push({
+      x:Math.random()*c.width,y:50+Math.random()*c.height*0.4,
+      r:50+Math.random()*70,vx:0.15+Math.random()*0.2,
+      a:0.02+Math.random()*0.03,type:'cloud'
+    });
+  } else if(cond==='Rain'||cond==='Drizzle'){
+    const n=cond==='Drizzle'?70:180;
+    for(let i=0;i<n;i++) wxParticles.push({
+      x:Math.random()*c.width,y:Math.random()*c.height,
+      vx:-1.2,vy:9+Math.random()*7,
+      len:10+Math.random()*8,a:0.25+Math.random()*0.3,type:'rain'
+    });
+  } else if(cond==='Thunderstorm'){
+    for(let i=0;i<220;i++) wxParticles.push({
+      x:Math.random()*c.width,y:Math.random()*c.height,
+      vx:-2,vy:13+Math.random()*7,
+      len:12+Math.random()*8,a:0.18+Math.random()*0.25,type:'rain'
+    });
+    wxParticles.push({type:'lightning',timer:0,wait:70+Math.random()*120,branches:[],active:false});
+  } else if(cond==='Snow'){
+    for(let i=0;i<150;i++) wxParticles.push({
+      x:Math.random()*c.width,y:Math.random()*c.height,
+      r:1.5+Math.random()*2.5,
+      vx:(Math.random()-0.5)*0.7,vy:0.4+Math.random()*1.2,
+      a:0.4+Math.random()*0.5,drift:Math.random()*Math.PI*2,type:'snow'
+    });
+  } else if(['Mist','Fog','Haze','Smoke'].includes(cond)){
+    for(let i=0;i<7;i++) wxParticles.push({
+      x:Math.random()*c.width,y:Math.random()*c.height,
+      r:130+Math.random()*180,vx:(Math.random()-0.5)*0.25,
+      a:0.03+Math.random()*0.05,type:'mist'
+    });
+  } else {
+    // Default: gentle clouds + particles
+    for(let i=0;i<5;i++) wxParticles.push({
+      x:Math.random()*c.width,y:60+Math.random()*c.height*0.35,
+      r:60+Math.random()*80,vx:0.12+Math.random()*0.2,
+      a:0.025+Math.random()*0.035,type:'cloud'
+    });
+  }
+
+  function makeLightning(x,y,len,ang,d){
+    if(d>4||len<15) return[];
+    const ex=x+Math.cos(ang)*len+((Math.random()-0.5)*len*0.5);
+    const ey=y+Math.sin(ang)*len+((Math.random()-0.5)*len*0.5);
+    let b=[{x1:x,y1:y,x2:ex,y2:ey,a:1}];
+    if(Math.random()>0.5) b=[...b,...makeLightning(ex,ey,len*0.55,ang+(Math.random()-0.5)*1.2,d+1)];
+    return [...b,...makeLightning(ex,ey,len*0.7,ang+(Math.random()-0.5)*0.4,d+1)];
+  }
+
+  function drawCloud(x,y,r,a){
+    ctx.save(); ctx.globalAlpha=a;
+    [[0,0,1],[r*0.4,-r*0.2,0.8],[r*0.7,0,0.75],[-r*0.4,-r*0.15,0.75]].forEach(([dx,dy,f])=>{
+      const g=ctx.createRadialGradient(x+dx,y+dy,r*f*0.1,x+dx,y+dy,r*f);
+      g.addColorStop(0,'rgba(0,229,204,0.15)');
+      g.addColorStop(1,'transparent');
+      ctx.beginPath(); ctx.arc(x+dx,y+dy,r*f,0,Math.PI*2);
+      ctx.fillStyle=g; ctx.fill();
+    }); ctx.restore();
+  }
+
+  function frame(){
+    wxAnimFrame=requestAnimationFrame(frame);
+    ctx.clearRect(0,0,c.width,c.height);
+    wxParticles.forEach(p=>{
+      if(p.type==='cloud'){
+        p.x+=p.vx; if(p.x>c.width+p.r*2) p.x=-p.r*2;
+        drawCloud(p.x,p.y,p.r,p.a);
+      } else if(p.type==='rain'){
+        p.x+=p.vx; p.y+=p.vy;
+        if(p.y>c.height){p.y=-10;p.x=Math.random()*c.width;}
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y); ctx.lineTo(p.x+p.vx*1.5,p.y-p.len);
+        ctx.strokeStyle=`rgba(0,180,220,${p.a})`; ctx.lineWidth=0.8; ctx.stroke();
+      } else if(p.type==='snow'){
+        p.drift+=0.012; p.x+=p.vx+Math.sin(p.drift)*0.5; p.y+=p.vy;
+        if(p.y>c.height){p.y=-5;p.x=Math.random()*c.width;}
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(200,230,255,${p.a})`; ctx.fill();
+      } else if(p.type==='mist'){
+        p.x+=p.vx; if(p.x>c.width+p.r) p.x=-p.r;
+        const g=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r);
+        g.addColorStop(0,`rgba(0,200,180,${p.a})`);
+        g.addColorStop(1,'transparent');
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle=g; ctx.fill();
+      } else if(p.type==='lightning'){
+        p.timer++;
+        if(p.timer>=p.wait){
+          p.active=true; p.timer=0; p.wait=70+Math.random()*150;
+          const sx=c.width*0.2+Math.random()*c.width*0.6;
+          p.branches=makeLightning(sx,0,c.height*0.38,Math.PI/2+((Math.random()-0.5)*0.5),0);
+        }
+        if(p.active){
+          p.branches.forEach(b=>{
+            b.a-=0.05; if(b.a<=0) return;
+            ctx.beginPath(); ctx.moveTo(b.x1,b.y1); ctx.lineTo(b.x2,b.y2);
+            ctx.strokeStyle=`rgba(160,220,255,${b.a*0.9})`;
+            ctx.lineWidth=b.a*2.5;
+            ctx.shadowColor='rgba(0,229,204,0.8)'; ctx.shadowBlur=12;
+            ctx.stroke(); ctx.shadowBlur=0;
+          });
+          if(p.branches.every(b=>b.a<=0)) p.active=false;
+        }
+      }
+    });
+  }
+  frame();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════════════════
+const $=id=>document.getElementById(id);
+function showToast(msg,d=4200){
+  const t=$('toast'); t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),d);
+}
+function setProgress(p){
+  $('progressBar').style.width=p+'%';
+  if(p>=100) setTimeout(()=>$('progressBar').style.width='0%',600);
+}
+function dewPoint(t,rh){
+  const a=17.27,b=237.7;
+  const α=((a*t)/(b+t))+Math.log(rh/100);
+  return (b*α)/(a-α);
+}
+function toUnit(c){return unit==='C'?c:(c*9/5+32)}
+function fmtT(c){return Math.round(toUnit(c))}
+function tLbl(){return unit==='C'?'°C':'°F'}
+function fmtTime(unix,tz){
+  const d=new Date((unix+tz)*1000);
+  return d.toUTCString().slice(17,22);
+}
+function fmtDate(unix,tz){
+  return new Date((unix+tz)*1000).toUTCString().slice(0,16);
+}
+const WIND16=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+function deg2comp(d){return WIND16[Math.round(d/22.5)%16]}
+function insight(d){
+  const t=d.main.temp,h=d.main.humidity,m=d.weather[0].main;
+  const w=d.wind.speed*3.6,v=d.visibility/1000;
+  if(m==='Thunderstorm') return '⛈️ <strong>Thunderstorm alert:</strong> Stay indoors, avoid open fields and tall trees.';
+  if(m==='Snow') return '❄️ <strong>Snowfall:</strong> Icy roads likely — drive carefully and layer up.';
+  if(t>36) return '🌡️ <strong>Extreme heat:</strong> Stay hydrated, seek shade, avoid midday sun.';
+  if(t<0)  return '🥶 <strong>Freezing:</strong> Multiple layers essential. Black ice risk on roads.';
+  if(h>88) return '💦 <strong>Very humid:</strong> Heat index significantly higher than shown temperature.';
+  if(w>55) return '🌬️ <strong>Strong winds:</strong> Secure loose outdoor items. Driving affected.';
+  if(v<2)  return '🌫️ <strong>Poor visibility:</strong> Use fog lights. Reduce driving speed.';
+  if(m==='Clear'&&t>20) return '☀️ <strong>Beautiful day!</strong> Perfect for outdoor activities — apply sunscreen.';
+  return `🌤️ <strong>Current conditions:</strong> ${d.weather[0].description} at ${fmtT(t)}${tLbl()}. ${h>65?'Feels humid.':'Comfortable humidity.'}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUTOCOMPLETE
+// ═══════════════════════════════════════════════════════════
+$('cityInput').addEventListener('input',()=>{
+  clearTimeout(acTimer);
+  const q=$('cityInput').value.trim();
+  if(q.length<2){closeAC();return;}
+  acTimer=setTimeout(()=>fetchAC(q),350);
+});
+$('cityInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){closeAC();doSearch();}
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.search-input-wrap')) closeAC();
+});
+async function fetchAC(q){
+  if(!API_KEY||API_KEY==='YOUR_API_KEY') return;
+  try{
+    const r=await fetch(`${BASE}/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=5&appid=${API_KEY}`);
+    const cities=await r.json();
+    if(!cities.length){closeAC();return;}
+    const box=$('acBox');
+    box.innerHTML=cities.map(c=>
+      `<div class="ac-item" onclick="selectCity('${c.name}, ${c.country}',${c.lat},${c.lon})">
+        <span>🏙️</span>
+        <span class="ac-city">${c.name}</span>
+        <span class="ac-country">${c.state?c.state+', ':''}${c.country}</span>
+      </div>`
+    ).join('');
+    box.classList.add('open');
+  }catch(e){closeAC();}
+}
+function closeAC(){
+  const b=$('acBox'); b.classList.remove('open'); b.innerHTML='';
+}
+function selectCity(display, lat, lon){
+  $('cityInput').value=display; closeAC();
+  loadByCoords(lat, lon, display);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  GEOLOCATION
+// ═══════════════════════════════════════════════════════════
+function doGeo(){
+  if(!navigator.geolocation){showToast('Geolocation not supported.');return;}
+  navigator.geolocation.getCurrentPosition(
+    p=>loadByCoords(p.coords.latitude, p.coords.longitude),
+    ()=>showToast('Location denied. Search manually.')
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SEARCH
+// ═══════════════════════════════════════════════════════════
+async function doSearch(){
+  const city=$('cityInput').value.trim();
+  if(!city) return;
+  try{
+    setProgress(20);
+    const r=await fetch(`${BASE}/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`);
+    if(!r.ok) throw new Error(r.status===404?`"${city}" not found.`:'Network error.');
+    const d=await r.json();
+    setProgress(40);
+    loadByCoords(d.coord.lat, d.coord.lon, city);
+  }catch(e){setProgress(100);showToast('⚠️ '+e.message);}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOAD BY COORDS
+// ═══════════════════════════════════════════════════════════
+async function loadByCoords(lat, lon, cityHint){
+  setProgress(30);
+
+  // Trigger Google Earth zoom FIRST
+  triggerGlobeZoom(lat, lon, async ()=>{
+    try{
+      setProgress(50);
+      const [wR, fR, aqR]=await Promise.all([
+        fetch(`${BASE}/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`),
+        fetch(`${BASE}/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`),
+        fetch(`${BASE}/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`)
+      ]);
+      setProgress(80);
+      wxData  = wR.ok  ? await wR.json()  : null;
+      fcData  = fR.ok  ? await fR.json()  : null;
+      aqData_ = aqR.ok ? await aqR.json() : null;
+      setProgress(100);
+      if(wxData) renderWeather();
+    }catch(e){setProgress(100);showToast('⚠️ '+e.message);}
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER WEATHER
+// ═══════════════════════════════════════════════════════════
+function renderWeather(){
+  const d=wxData, tz=d.timezone;
+  const cond=d.weather[0].main;
+  const th=THEMES[cond]||THEMES.Clouds;
+
+  // Switch screens
+  $('landingScreen').classList.add('hide');
+  setTimeout(()=>{
+    $('landingScreen').style.display='none';
+    const ws=$('weatherScreen');
+    ws.style.display='block';
+    setTimeout(()=>ws.classList.add('visible'),50);
+  },800);
+
+  // Background gradient + canvas
+  document.body.style.background=`linear-gradient(155deg,${th.from},${th.mid},${th.to})`;
+  startWxCanvas(cond);
+
+  // HERO
+  $('wxCity').textContent=d.name;
+  $('wxCountry').textContent=d.sys.country;
+  $('wxDatetime').innerHTML=fmtDate(d.dt,tz).replace(',',' ').toUpperCase()+'<br>'+fmtTime(d.dt,tz);
+  $('wxEmoji').textContent=EMOJIS[cond]||'🌡️';
+  $('wxCond').textContent=d.weather[0].description.toUpperCase();
+  $('wxFeels').textContent=`Feels like ${fmtT(d.main.feels_like)}${tLbl()} · ${d.main.humidity}% humidity`;
+
+  updateTempDisplays();
+
+  // STATS
+  const hum=d.main.humidity, wind=d.wind.speed*3.6;
+  const pres=d.main.pressure, vis=d.visibility/1000;
+  const dew=dewPoint(d.main.temp,hum), cloud=d.clouds.all;
+
+  $('sbHum').innerHTML=`${hum}<span class="sb-unit">%</span>`;
+  $('sbWind').innerHTML=`${Math.round(wind)}<span class="sb-unit">km/h</span>`;
+  $('sbPres').innerHTML=`${pres}<span class="sb-unit">hPa</span>`;
+  $('sbVis').innerHTML=`${vis.toFixed(1)}<span class="sb-unit">km</span>`;
+  $('sbDew').innerHTML=`${Math.round(toUnit(dew))}<span class="sb-unit">${tLbl()}</span>`;
+  $('sbCloud').innerHTML=`${cloud}<span class="sb-unit">%</span>`;
+
+  setTimeout(()=>{
+    $('bHum').style.width=hum+'%';
+    $('bWind').style.width=Math.min(wind/120*100,100)+'%';
+    $('bPres').style.width=Math.min((pres-950)/100*100,100)+'%';
+    $('bVis').style.width=Math.min(vis/10*100,100)+'%';
+    $('bDew').style.width=Math.min((dew+10)/50*100,100)+'%';
+    $('bCloud').style.width=cloud+'%';
+  },600);
+
+  // INFO
+  $('wxInfoText').innerHTML=insight(d);
+
+  // SUN ARC
+  renderSun(d.sys.sunrise,d.sys.sunset,d.dt,tz);
+
+  // WIND COMPASS
+  drawWindCompass(d.wind.deg||0, wind);
+  $('wxWindDir').textContent=`${deg2comp(d.wind.deg||0)} at ${Math.round(wind)} km/h`;
+  $('wxWindGust').textContent=d.wind.gust?`Gusts: ${Math.round(d.wind.gust*3.6)} km/h`:'Steady winds';
+
+  // COMFORT
+  renderComfort(d,dew);
+
+  // HOURLY
+  if(fcData) renderHourly(fcData,tz);
+  if(fcData) renderForecast(fcData,tz);
+  if(aqData_) renderAQ(aqData_);
+}
+
+function updateTempDisplays(){
+  if(!wxData) return;
+  const d=wxData;
+  $('wxBigTemp').innerHTML=`${fmtT(d.main.temp)}<sup>${tLbl()}</sup>`;
+  $('wxHi').textContent=fmtT(d.main.temp_max)+tLbl();
+  $('wxLo').textContent=fmtT(d.main.temp_min)+tLbl();
+  ['btnC','btnF','btnC2','btnF2'].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.classList.toggle('active', id.includes(unit));
+  });
+  if(fcData) renderHourly(fcData,wxData.timezone);
+  if(fcData) renderForecast(fcData,wxData.timezone);
+}
+
+function setUnit(u){
+  unit=u;
+  $('btnC').classList.toggle('active',u==='C');
+  $('btnF').classList.toggle('active',u==='F');
+  const c2=$('btnC2'), f2=$('btnF2');
+  if(c2) c2.classList.toggle('active',u==='C');
+  if(f2) f2.classList.toggle('active',u==='F');
+  if(wxData) updateTempDisplays();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SUN ARC
+// ═══════════════════════════════════════════════════════════
+function renderSun(rise,set,now,tz){
+  const c=$('sunArcCanvas');
+  const W=c.offsetWidth||560; c.width=W; c.height=130;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,W,130);
+  const mx=W/2,my=124,rx=W*0.44,ry=95;
+  const total=set-rise, elapsed=now-rise;
+  const pct=Math.max(0,Math.min(1,elapsed/total));
+
+  // Track
+  ctx.beginPath(); ctx.ellipse(mx,my,rx,ry,0,Math.PI,0);
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.lineWidth=2; ctx.stroke();
+
+  // Progress
+  ctx.beginPath();
+  ctx.ellipse(mx,my,rx,ry,0,Math.PI,Math.PI+pct*Math.PI);
+  const g=ctx.createLinearGradient(mx-rx,0,mx+rx,0);
+  g.addColorStop(0,'#ffd166'); g.addColorStop(0.5,'#ffb347'); g.addColorStop(1,'#ff5e7a');
+  ctx.strokeStyle=g; ctx.lineWidth=3; ctx.stroke();
+
+  // Sun dot
+  const ax=mx+rx*Math.cos(Math.PI+pct*Math.PI)*-1;
+  const ay=my+ry*Math.sin(Math.PI+pct*Math.PI)*-1;
+  const sg=ctx.createRadialGradient(ax,ay,0,ax,ay,22);
+  sg.addColorStop(0,'rgba(255,200,80,0.7)'); sg.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.arc(ax,ay,22,0,Math.PI*2); ctx.fillStyle=sg; ctx.fill();
+  ctx.beginPath(); ctx.arc(ax,ay,6,0,Math.PI*2); ctx.fillStyle='#ffd166'; ctx.fill();
+
+  // Horizon dots
+  [[mx-rx,my,'rgba(255,166,96,0.8)'],[mx+rx,my,'rgba(255,94,122,0.8)']].forEach(([x,y,col])=>{
+    ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+  });
+
+  $('wxSunrise').textContent=fmtTime(rise,tz);
+  $('wxSunset').textContent=fmtTime(set,tz);
+  const mins=Math.round(total/60);
+  $('wxDayLen').textContent=`${Math.floor(mins/60)}h ${mins%60}m`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  WIND COMPASS
+// ═══════════════════════════════════════════════════════════
+function drawWindCompass(deg, speed){
+  const c=$('windCompassCanvas');
+  const W=170,H=170,mx=85,my=85,R=68;
+  c.width=W; c.height=H;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // Rings
+  [1,0.62,0.36].forEach((f,i)=>{
+    ctx.beginPath(); ctx.arc(mx,my,R*f,0,Math.PI*2);
+    ctx.strokeStyle=i===0?'rgba(0,229,204,0.2)':'rgba(255,255,255,0.06)';
+    ctx.lineWidth=i===0?1.5:1; ctx.stroke();
+  });
+
+  // Ticks
+  for(let i=0;i<36;i++){
+    const a=(i*10-90)*Math.PI/180;
+    const r1=R-(i%9===0?12:6);
+    ctx.beginPath();
+    ctx.moveTo(mx+Math.cos(a)*R,my+Math.sin(a)*R);
+    ctx.lineTo(mx+Math.cos(a)*r1,my+Math.sin(a)*r1);
+    ctx.strokeStyle=i%9===0?'rgba(0,229,204,0.4)':'rgba(255,255,255,0.1)';
+    ctx.lineWidth=i%9===0?1.5:0.8; ctx.stroke();
+  }
+
+  // Cardinal labels
+  [['N',0,'#00e5cc'],['E',90,null],['S',180,null],['W',270,null]].forEach(([l,d,col])=>{
+    const a=(d-90)*Math.PI/180;
+    ctx.font='bold 10px Syne, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle=col||'rgba(255,255,255,0.35)';
+    ctx.fillText(l,mx+Math.cos(a)*(R+14),my+Math.sin(a)*(R+14));
+  });
+
+  // Arrow
+  const rad=(deg-90)*Math.PI/180;
+  const ax=mx+Math.cos(rad)*R*0.62, ay=my+Math.sin(rad)*R*0.62;
+  const bx=mx+Math.cos(rad+Math.PI)*R*0.42, by=my+Math.sin(rad+Math.PI)*R*0.42;
+  const ag=ctx.createLinearGradient(bx,by,ax,ay);
+  ag.addColorStop(0,'transparent'); ag.addColorStop(1,'#00e5cc');
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(ax,ay);
+  ctx.strokeStyle=ag; ctx.lineWidth=2.5; ctx.lineCap='round'; ctx.stroke();
+  // Arrowhead
+  ctx.beginPath(); ctx.moveTo(ax,ay);
+  ctx.lineTo(ax+Math.cos(rad+2.6)*9,ay+Math.sin(rad+2.6)*9);
+  ctx.lineTo(ax+Math.cos(rad-2.6)*9,ay+Math.sin(rad-2.6)*9);
+  ctx.closePath(); ctx.fillStyle='#00e5cc'; ctx.fill();
+  // Center
+  const cg=ctx.createRadialGradient(mx,my,0,mx,my,9);
+  cg.addColorStop(0,'rgba(0,229,204,0.4)'); cg.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.arc(mx,my,9,0,Math.PI*2); ctx.fillStyle=cg; ctx.fill();
+  ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.fill();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HOURLY
+// ═══════════════════════════════════════════════════════════
+function renderHourly(data, tz){
+  $('hourlyRow').innerHTML=data.list.slice(0,8).map((it,i)=>{
+    const pop=it.pop?Math.round(it.pop*100):0;
+    return `<div class="h-item${i===0?' now':''}">
+      <div class="h-time">${fmtTime(it.dt,tz)}</div>
+      <div class="h-icon">${EMOJIS[it.weather[0].main]||'🌡️'}</div>
+      <div class="h-temp">${fmtT(it.main.temp)}${tLbl()}</div>
+      ${pop?`<div class="h-pop">💧${pop}%</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  5-DAY FORECAST
+// ═══════════════════════════════════════════════════════════
+function renderForecast(data, tz){
+  const days={};
+  data.list.forEach(it=>{
+    const k=new Date((it.dt+tz)*1000).toUTCString().slice(0,11);
+    if(!days[k]) days[k]=[];
+    days[k].push(it);
+  });
+  $('fcRow').innerHTML=Object.entries(days).slice(0,5).map(([day,items])=>{
+    const temps=items.map(i=>i.main.temp);
+    const hi=Math.max(...temps), lo=Math.min(...temps);
+    const noon=items.find(it=>{const h=new Date((it.dt+tz)*1000).getUTCHours();return h>=11&&h<=14;})||items[Math.floor(items.length/2)];
+    const pop=Math.round(Math.max(...items.map(i=>i.pop||0))*100);
+    const wd=new Date((items[0].dt+tz)*1000).toUTCString().slice(0,3).toUpperCase();
+    return `<div class="fc-item">
+      <div class="fc-day">${wd}</div>
+      <span class="fc-ico">${EMOJIS[noon.weather[0].main]||'🌡️'}</span>
+      <div class="fc-desc">${noon.weather[0].description}</div>
+      <div class="fc-tt"><span class="fc-hi">${fmtT(hi)}°</span><span class="fc-lo">${fmtT(lo)}°</span></div>
+      ${pop?`<div class="fc-pop">💧${pop}%</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AIR QUALITY
+// ═══════════════════════════════════════════════════════════
+function renderAQ(data){
+  const aqi=data.list[0].main.aqi;
+  const comp=data.list[0].components;
+  const lv=AQ_LVLS[aqi-1]||AQ_LVLS[0];
+  const ring=$('aqRing');
+  ring.style.color=lv.c; ring.style.borderColor=lv.c;
+  ring.style.boxShadow=`0 0 28px ${lv.c}44`;
+  $('aqNum').textContent=aqi;
+  $('aqLabel').textContent=lv.l; $('aqLabel').style.color=lv.c;
+  $('aqDesc').textContent=lv.d;
+  $('aqPols').innerHTML=[
+    {n:'PM2.5',v:comp.pm2_5},{n:'PM10',v:comp.pm10},
+    {n:'NO₂',v:comp.no2},{n:'O₃',v:comp.o3}
+  ].map(p=>`<div class="aq-pol">
+    <div class="aq-pname">${p.n}</div>
+    <div class="aq-pval">${p.v.toFixed(1)}<span class="aq-punit">µg/m³</span></div>
+  </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  COMFORT
+// ═══════════════════════════════════════════════════════════
+function renderComfort(d, dew){
+  const t=d.main.temp, h=d.main.humidity, w=d.wind.speed*3.6;
+  const setC=(id,val,labId,label)=>{
+    setTimeout(()=>$(id).style.width=val+'%',700);
+    $(labId).textContent=label;
+  };
+  setC('cmTemp', Math.min(100,Math.max(0,(t+10)/50*100)), 'cmTempV',
+    t<0?'Very Cold':t<10?'Cold':t<20?'Cool':t<27?'Comfortable':t<35?'Warm':'Hot');
+  setC('cmHum', Math.min(100,h), 'cmHumV',
+    h<30?'Dry':h<60?'Comfortable':h<80?'Humid':'Very Humid');
+  setC('cmWind', Math.min(100,w/100*100), 'cmWindV',
+    w<10?'Calm':w<25?'Light':w<50?'Moderate':w<75?'Strong':'Severe');
+  const uv=Math.max(0,10-d.clouds.all/10);
+  setC('cmUV', uv/11*100, 'cmUVV',
+    uv<1?'Minimal':uv<5?'Moderate':uv<8?'High':'Very High');
+  setC('cmVis', Math.min(100,d.visibility/10000*100), 'cmVisV',
+    d.visibility>=10000?'Excellent':d.visibility>=5000?'Good':d.visibility>=2000?'Moderate':'Poor');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function goBack(){
+  const ws=$('weatherScreen');
+  ws.classList.remove('visible');
+  setTimeout(()=>{
+    ws.style.display='none';
+    const ls=$('landingScreen');
+    ls.style.display='flex';
+    ls.classList.remove('hide');
+    document.body.style.background='';
+    document.getElementById('globePin').classList.remove('show');
+  },700);
+}
+</script>
+</body>
+</html>
